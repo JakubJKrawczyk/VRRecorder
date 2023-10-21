@@ -6,29 +6,29 @@ namespace Recorder.Entities.OculusVR
     internal struct LeftControllerVREntity
     {
         // Buttons
-        internal bool ButtonXPressed { get; set; }
-        internal bool ButtonXTouched { get; set; }
-        internal bool ButtonYPressed { get; set; }
-        internal bool ButtonYTouched { get; set; }
-        internal bool ButtonMenuPressed { get; set; }
-        internal bool GripPressed { get; set; }
-        internal bool TrigPressed { get; set; }
-        internal double TrigValue { get; set; }
-        internal bool TrigTouched { get; set; }
-        internal bool JoyPressed { get; set; }
-        internal bool JoyTouched { get; set; }
-        internal double JoyX { get; set; }
-        internal double JoyY { get; set; }
+        public bool L_ButtonXPressed { get; set; }
+        public bool L_ButtonXTouched { get; set; }
+        public bool L_ButtonYPressed { get; set; }
+        public bool L_ButtonYTouched { get; set; }
+        public bool L_ButtonMenuPressed { get; set; }
+        public bool L_GripPressed { get; set; }
+        public bool L_TrigPressed { get; set; }
+        public double L_TrigValue { get; set; }
+        public bool L_TrigTouched { get; set; }
+        public bool L_JoyPressed { get; set; }
+        public bool L_JoyTouched { get; set; }
+        public double L_JoyX { get; set; }
+        public double L_JoyY { get; set; }
 
         // Transform parameters
-        internal double PosX { get; set; }
-        internal double PosY { get; set; }
-        internal double PosZ { get; set; }
-        internal double RotX { get; set; }
-        internal double RotY { get; set; }
-        internal double RotZ { get; set; }
+        public double L_PosX { get; set; }
+        public double L_PosY { get; set; }
+        public double L_PosZ { get; set; }
+        public double L_RotX { get; set; }
+        public double L_RotY { get; set; }
+        public double L_RotZ { get; set; }
 
-        internal LeftControllerVREntity(
+        public LeftControllerVREntity(
             // fields from this class
             bool buttonXPressed = false,
             bool buttonXTouched = false,
@@ -54,26 +54,26 @@ namespace Recorder.Entities.OculusVR
             )
         {
             // class extended constructor
-            ButtonXPressed = buttonXPressed;
-            ButtonXTouched = buttonXTouched;
-            ButtonYPressed = buttonYPressed; 
-            ButtonYTouched = buttonYTouched; 
-            ButtonMenuPressed = buttonMenuPressed;
-            GripPressed = gripPressed;
-            TrigPressed = trigPressed;
-            TrigValue = trigPressedValue;
-            TrigTouched = trigTouched;
-            JoyPressed = thumbstickPressed;
-            JoyTouched = thumbstickTouched;
-            JoyX = thumbstickX;
-            JoyY = thumbstickY;
+            L_ButtonXPressed = buttonXPressed;
+            L_ButtonXTouched = buttonXTouched;
+            L_ButtonYPressed = buttonYPressed; 
+            L_ButtonYTouched = buttonYTouched; 
+            L_ButtonMenuPressed = buttonMenuPressed;
+            L_GripPressed = gripPressed;
+            L_TrigPressed = trigPressed;
+            L_TrigValue = trigPressedValue;
+            L_TrigTouched = trigTouched;
+            L_JoyPressed = thumbstickPressed;
+            L_JoyTouched = thumbstickTouched;
+            L_JoyX = thumbstickX;
+            L_JoyY = thumbstickY;
             
-            PosX = posX;
-            PosY = posY;
-            PosZ = posZ;
-            RotX = rotX;
-            RotY = rotY;
-            RotZ = rotZ;
+            L_PosX = posX;
+            L_PosY = posY;
+            L_PosZ = posZ;
+            L_RotX = rotX;
+            L_RotY = rotY;
+            L_RotZ = rotZ;
 
 
         }

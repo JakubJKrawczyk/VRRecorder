@@ -6,14 +6,14 @@ namespace Recorder.Entities.OculusVR
     internal struct HeadVREntity
     {
 
-        internal double PosX { get; set; }
-        internal double PosY { get; set; }
-        internal double PosZ { get; set; }
-        internal double RotX { get; set; }
-        internal double RotY { get; set; }
-        internal double RotZ { get; set; }
-
-        internal HeadVREntity(
+        public double H_PosX { get; set; }
+        public double H_PosY { get; set; }
+        public double H_PosZ { get; set; }
+        public double H_RotX { get; set; }
+        public double H_RotY { get; set; }
+        public double H_RotZ { get; set; }
+                       
+        public HeadVREntity(
             double positionX = 0,
             double positionY = 0,
             double positionZ = 0,
@@ -22,12 +22,12 @@ namespace Recorder.Entities.OculusVR
             double rotationZ = 0
         )
         {
-            PosX = positionX;
-            PosY = positionY;
-            PosZ = positionZ;
-            RotX = rotationX;
-            RotY = rotationY;
-            RotZ = rotationZ;
+            H_PosX = positionX;
+            H_PosY = positionY;
+            H_PosZ = positionZ;
+            H_RotX = rotationX;
+            H_RotY = rotationY;
+            H_RotZ = rotationZ;
         }
 
         

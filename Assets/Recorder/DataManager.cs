@@ -9,6 +9,7 @@ using CsvHelper;
 using Newtonsoft.Json;
 using Recorder.Entities;
 using Recorder.Entities.OculusVR;
+using Unity.XR.CoreUtils;
 using UnityEngine;
 
 namespace Recorder
@@ -23,327 +24,259 @@ namespace Recorder
         internal GameObject RightController { get; set; }
         internal GameObject HeadController { get; set; }
         internal TimeSpan StartRecordingTime { get; set; }
+
+        // property normalizacji danych
+        public double[,] macierzRotacji = new double[2, 2];
+        public double floorHeight = 0;
+        double RotacjaHeadsetaWosiY = 0;
+        double wysokoscGracza = 0;
+
         // private props
         internal DataManager()
         {
+
+
+
+
+
+        }
+        private void GetHeadsetRotation()
+        {
+            RotacjaHeadsetaWosiY = HeadController.transform.rotation.eulerAngles.y;
+
+        }
+        public void SetNormalizationProperties()
+        {
+            GetHeadsetRotation();
+            macierzRotacji[0, 0] = Math.Cos(RotacjaHeadsetaWosiY);
+            macierzRotacji[1, 0] = Math.Sin(RotacjaHeadsetaWosiY);
+            macierzRotacji[0, 1] = -Math.Sin(RotacjaHeadsetaWosiY);
+            macierzRotacji[1, 1] = Math.Cos(RotacjaHeadsetaWosiY);
+
+            wysokoscGracza = HeadController.transform.position.y - floorHeight;
         }
         internal void AddRecord(ref StreamWriter stream, ref CsvWriter csvstream)
         {
+
             Record record = new();
             LeftControllerVREntity left = new();
             RightControllerVREntity right = new();
             HeadVREntity head = new();
-            if (Configuration.RecordLeftMenuPressed)
-            {
-                if (OpenXRInputActions.leftMenuPressed != null)
-                {
-                    left.ButtonMenuPressed = OpenXRInputActions.leftMenuPressed.action.ReadValue<float>() == 1;
-                }
-            }
-            if (Configuration.RecordLeftPrimaryButtonPressed)
-            {
-                if (OpenXRInputActions.leftPrimaryButtonPressed != null)
-                {
-                    left.ButtonXPressed = OpenXRInputActions.leftPrimaryButtonPressed.action.ReadValue<float>() == 1;
-                }
-            }
-            if (Configuration.RecordLeftPrimaryButtonTouched)
-            {
 
-                if (OpenXRInputActions.leftPrimaryButtonTouched != null)
-                {
-                    left.ButtonXTouched = OpenXRInputActions.leftPrimaryButtonTouched.action.ReadValue<float>() == 1;
-                }
-            }
-            if (Configuration.RecordLeftSecondaryButtonPressed)
-            {
 
-                if (OpenXRInputActions.leftSecondaryButtonPressed != null)
-                {
-                    left.ButtonYPressed = OpenXRInputActions.leftSecondaryButtonPressed.action.ReadValue<float>() == 1;
-                }
-            }
-            if (Configuration.RecordLeftSecondaryButtonTouched)
-            {
+            Vector2 HeadPositionin2D = new Vector2(HeadController.transform.position.x, HeadController.transform.position.z);
 
-                if (OpenXRInputActions.leftSecondaryButtonTouched != null)
-                {
-                    left.ButtonYTouched = OpenXRInputActions.leftSecondaryButtonTouched.action.ReadValue<float>() == 1;
-                }
-            }
-            if (Configuration.RecordLeftTriggerPressed)
+            if (OpenXRInputActions.leftMenuPressed != null)
             {
-
-                if (OpenXRInputActions.leftTriggerPressed != null)
-                {
-                    left.TrigPressed = OpenXRInputActions.leftTriggerPressed.action.ReadValue<float>() == 1;
-                    Debug.Log($"Trigger Press Added: {left.TrigPressed}");
-                }
-            }
-            if (Configuration.RecordLeftTriggerPressedValue)
-            {
-
-                if (OpenXRInputActions.leftTriggerPressedValue != null)
-                {
-                    left.TrigValue = OpenXRInputActions.leftTriggerPressedValue.action.ReadValue<float>();
-                }
-            }
-            if (Configuration.RecordLeftTriggerTouched)
-            {
-
-                if (OpenXRInputActions.leftTriggerTouched != null)
-                {
-                    left.TrigTouched = OpenXRInputActions.leftTriggerTouched.action.ReadValue<float>() == 1;
-                }
-            }
-            if (Configuration.RecordLeftThumbStickPressed)
-            {
-
-                if (OpenXRInputActions.leftThumbStickPressed != null)
-                {
-                    left.JoyPressed = OpenXRInputActions.leftThumbStickPressed.action.ReadValue<float>() == 1;
-                }
-            }
-            if (Configuration.RecordLeftThumbStickTouched)
-            {
-
-                if (OpenXRInputActions.leftThumbStickTouched != null)
-                {
-                    left.JoyTouched = OpenXRInputActions.leftThumbStickTouched.action.ReadValue<float>() == 1;
-                }
-            }
-            if (Configuration.RecordLeftThumbStickMove)
-            {
-
-                if (OpenXRInputActions.leftThumbStickMove != null)
-                {
-                    left.JoyX = OpenXRInputActions.leftThumbStickMove.action.ReadValue<Vector2>().normalized.x;
-                }
+                left.L_ButtonMenuPressed = OpenXRInputActions.leftMenuPressed.action.ReadValue<float>() == 1;
             }
 
-            if (Configuration.RecordLeftThumbStickMove)
-            {
 
-                if (OpenXRInputActions.leftThumbStickMove != null)
-                {
-                    left.JoyY = OpenXRInputActions.leftThumbStickMove.action.ReadValue<Vector2>().normalized.y;
-                }
+            if (OpenXRInputActions.leftPrimaryButtonPressed != null)
+            {
+                left.L_ButtonXPressed = OpenXRInputActions.leftPrimaryButtonPressed.action.ReadValue<float>() == 1;
             }
 
-            if (Configuration.RecordLeftGripPressed)
-            {
 
-                if (OpenXRInputActions.leftGripPressed != null)
-                {
-                    left.GripPressed = OpenXRInputActions.leftGripPressed.action.ReadValue<float>() == 1;
-                }
+
+            if (OpenXRInputActions.leftPrimaryButtonTouched != null)
+            {
+                left.L_ButtonXTouched = OpenXRInputActions.leftPrimaryButtonTouched.action.ReadValue<float>() == 1;
             }
+
+
+
+            if (OpenXRInputActions.leftSecondaryButtonPressed != null)
+            {
+                left.L_ButtonYPressed = OpenXRInputActions.leftSecondaryButtonPressed.action.ReadValue<float>() == 1;
+            }
+
+
+
+            if (OpenXRInputActions.leftSecondaryButtonTouched != null)
+            {
+                left.L_ButtonYTouched = OpenXRInputActions.leftSecondaryButtonTouched.action.ReadValue<float>() == 1;
+            }
+
+
+            if (OpenXRInputActions.leftTriggerPressed != null)
+            {
+                left.L_TrigPressed = OpenXRInputActions.leftTriggerPressed.action.ReadValue<float>() == 1;
+            }
+
+
+            if (OpenXRInputActions.leftTriggerPressedValue != null)
+            {
+                left.L_TrigValue = OpenXRInputActions.leftTriggerPressedValue.action.ReadValue<float>();
+            }
+
+
+            if (OpenXRInputActions.leftTriggerTouched != null)
+            {
+                left.L_TrigTouched = OpenXRInputActions.leftTriggerTouched.action.ReadValue<float>() == 1;
+            }
+
+
+            if (OpenXRInputActions.leftThumbStickPressed != null)
+            {
+                left.L_JoyPressed = OpenXRInputActions.leftThumbStickPressed.action.ReadValue<float>() == 1;
+            }
+
+
+            if (OpenXRInputActions.leftThumbStickTouched != null)
+            {
+                left.L_JoyTouched = OpenXRInputActions.leftThumbStickTouched.action.ReadValue<float>() == 1;
+            }
+
+
+            if (OpenXRInputActions.leftThumbStickMove != null)
+            {
+                left.L_JoyX = OpenXRInputActions.leftThumbStickMove.action.ReadValue<Vector2>().normalized.x;
+            }
+
+
+            if (OpenXRInputActions.leftThumbStickMove != null)
+            {
+                left.L_JoyY = OpenXRInputActions.leftThumbStickMove.action.ReadValue<Vector2>().normalized.y;
+            }
+
+
+            if (OpenXRInputActions.leftGripPressed != null)
+            {
+                left.L_GripPressed = OpenXRInputActions.leftGripPressed.action.ReadValue<float>() == 1;
+            }
+
 
             if (LeftController != null)
             {
-                if (Configuration.RecordLeftPositionX)
-                {
+                left.L_PosX = LeftController.transform.position.normalized.x;
+                left.L_PosY = LeftController.transform.position.normalized.y;
+                left.L_PosZ = LeftController.transform.position.normalized.z;
+                left.L_RotX = LeftController.transform.rotation.normalized.x;
+                left.L_RotY = LeftController.transform.rotation.normalized.y;
+                left.L_RotZ = LeftController.transform.rotation.normalized.z;
 
-
-                    left.PosX = LeftController.transform.position.normalized.x;
-
-                }
-                if (Configuration.RecordLeftPositionY)
-                {
-
-
-                    left.PosY = LeftController.transform.position.normalized.y;
-
-                }
-                if (Configuration.RecordLeftPositionZ)
-                {
-
-
-                    left.PosZ = LeftController.transform.position.normalized.z;
-
-                }
-                if (Configuration.RecordLeftRotationX)
-                {
-                    left.RotX = LeftController.transform.rotation.normalized.x;
-                }
-                if (Configuration.RecordLeftRotationY)
-                {
-                    left.RotY = LeftController.transform.rotation.normalized.y;
-                }
-                if (Configuration.RecordLeftRotationZ)
-                {
-                    left.RotZ = LeftController.transform.rotation.normalized.z;
-                }
             }
 
 
-            if (Configuration.RecordRightSystemPressed)
+
+            if (OpenXRInputActions.rightSystemPressed != null)
             {
-                if (OpenXRInputActions.rightSystemPressed != null)
-                {
-                    right.BtnSysPress = OpenXRInputActions.rightSystemPressed.action.ReadValue<float>() == 1;
-                }
+                right.R_BtnSysPress = OpenXRInputActions.rightSystemPressed.action.ReadValue<float>() == 1;
             }
-            if (Configuration.RecordRightPrimaryButtonPressed)
+
+            if (OpenXRInputActions.rightPrimaryButtonPressed != null)
             {
-                if (OpenXRInputActions.rightPrimaryButtonPressed != null)
-                {
-                    right.BtnAPressed = OpenXRInputActions.rightPrimaryButtonPressed.action.ReadValue<float>() == 1;
-                }
+                right.R_BtnAPressed = OpenXRInputActions.rightPrimaryButtonPressed.action.ReadValue<float>() == 1;
             }
-            if (Configuration.RecordRightPrimaryButtonTouched)
+
+
+            if (OpenXRInputActions.rightPrimaryButtonTouched != null)
             {
-
-                if (OpenXRInputActions.rightPrimaryButtonTouched != null)
-                {
-                    right.BtnATouched = OpenXRInputActions.rightPrimaryButtonTouched.action.ReadValue<float>() == 1;
-                }
+                right.R_BtnATouched = OpenXRInputActions.rightPrimaryButtonTouched.action.ReadValue<float>() == 1;
             }
-            if (Configuration.RecordRightSecondaryButtonPressed)
+
+
+            if (OpenXRInputActions.rightSecondaryButtonPressed != null)
             {
-
-                if (OpenXRInputActions.rightSecondaryButtonPressed != null)
-                {
-                    right.BtnBPressed = OpenXRInputActions.rightSecondaryButtonPressed.action.ReadValue<float>() == 1;
-                }
+                right.R_BtnBPressed = OpenXRInputActions.rightSecondaryButtonPressed.action.ReadValue<float>() == 1;
             }
-            if (Configuration.RecordRightSecondaryButtonTouched)
+
+
+            if (OpenXRInputActions.rightSecondaryButtonTouched != null)
             {
-
-                if (OpenXRInputActions.rightSecondaryButtonTouched != null)
-                {
-                    right.BtnBTouched = OpenXRInputActions.rightSecondaryButtonTouched.action.ReadValue<float>() == 1;
-                }
+                right.R_BtnBTouched = OpenXRInputActions.rightSecondaryButtonTouched.action.ReadValue<float>() == 1;
             }
-            if (Configuration.RecordRightTriggerPressed)
+
+
+            if (OpenXRInputActions.rightTriggerPressed != null)
             {
-
-                if (OpenXRInputActions.rightTriggerPressed != null)
-                {
-                    right.TrigPressed = OpenXRInputActions.rightTriggerPressed.action.ReadValue<float>() == 1;
-                }
+                right.R_TrigPressed = OpenXRInputActions.rightTriggerPressed.action.ReadValue<float>() == 1;
             }
-            if (Configuration.RecordRightTriggerPressedValue)
+
+
+            if (OpenXRInputActions.rightTriggerPressedValue != null)
             {
-
-                if (OpenXRInputActions.rightTriggerPressedValue != null)
-                {
-                    right.TrigValue = OpenXRInputActions.rightTriggerPressedValue.action.ReadValue<float>();
-                }
+                right.R_TrigValue = OpenXRInputActions.rightTriggerPressedValue.action.ReadValue<float>();
             }
-            if (Configuration.RecordRightTriggerTouched)
+
+
+            if (OpenXRInputActions.rightTriggerTouched != null)
             {
-
-                if (OpenXRInputActions.rightTriggerTouched != null)
-                {
-                    right.TrigTouched = OpenXRInputActions.rightTriggerTouched.action.ReadValue<float>() == 1;
-                }
+                right.R_TrigTouched = OpenXRInputActions.rightTriggerTouched.action.ReadValue<float>() == 1;
             }
-            if (Configuration.RecordRightThumbStickPressed)
+
+
+            if (OpenXRInputActions.rightThumbStickPressed != null)
             {
-
-                if (OpenXRInputActions.rightThumbStickPressed != null)
-                {
-                    right.JoyPressed = OpenXRInputActions.rightThumbStickPressed.action.ReadValue<float>() == 1;
-                }
+                right.R_JoyPressed = OpenXRInputActions.rightThumbStickPressed.action.ReadValue<float>() == 1;
             }
-            if (Configuration.RecordRightThumbStickTouched)
+
+
+            if (OpenXRInputActions.rightThumbStickTouched != null)
             {
-
-                if (OpenXRInputActions.rightThumbStickTouched != null)
-                {
-                    right.JoyTouched = OpenXRInputActions.rightThumbStickTouched.action.ReadValue<float>() == 1;
-                }
+                right.R_JoyTouched = OpenXRInputActions.rightThumbStickTouched.action.ReadValue<float>() == 1;
             }
 
-            if (Configuration.RecordRightGripPressed)
+
+            if (OpenXRInputActions.rightGripPressed != null)
             {
-
-                if (OpenXRInputActions.rightGripPressed != null)
-                {
-                    right.GripPressed = OpenXRInputActions.rightGripPressed.action.ReadValue<float>() == 1;
-                }
+                right.R_GripPressed = OpenXRInputActions.rightGripPressed.action.ReadValue<float>() == 1;
             }
 
-            if (Configuration.RecordRightThumbStickMove)
+
+            if (OpenXRInputActions.rightThumbStickMove != null)
             {
-
-                if (OpenXRInputActions.rightThumbStickMove != null)
-                {
-                    right.JoyX = OpenXRInputActions.rightThumbStickMove.action.ReadValue<Vector2>().normalized.x;
-                }
+                right.R_JoyX = OpenXRInputActions.rightThumbStickMove.action.ReadValue<Vector2>().normalized.x;
             }
-            if (Configuration.RecordRightThumbStickMove)
+
+            if (OpenXRInputActions.rightThumbStickMove != null)
             {
-
-                if (OpenXRInputActions.rightThumbStickMove != null)
-                {
-                    right.JoyY = OpenXRInputActions.rightThumbStickMove.action.ReadValue<Vector2>().normalized.y;
-                }
+                right.R_JoyY = OpenXRInputActions.rightThumbStickMove.action.ReadValue<Vector2>().normalized.y;
             }
+
             if (RightController != null)
             {
-                if (Configuration.RecordRightPositionX)
-                {
 
+                //Pozycja
+                double rightConX = RightController.transform.position.x - HeadPositionin2D.x;
+                double rightConZ = RightController.transform.position.z - HeadPositionin2D.y;
+                double y = RightController.transform.position.y;
+                double xPoObrocie = rightConX * macierzRotacji[0, 0] - rightConZ * macierzRotacji[0, 1];
+                double zPoObrocie = rightConX * macierzRotacji[1, 0] + rightConZ * macierzRotacji[1, 1];
+                double xPoNormalizacji = xPoObrocie / (wysokoscGracza / 2);
+                double zPoNormalizacji = zPoObrocie / (wysokoscGracza / 2);
+                double yPoNormalizacji = y / (wysokoscGracza / 2);
+                Debug.Log($"Pozycja prawego kontrolera znormalizowana: X: {xPoNormalizacji}\n Z: {zPoNormalizacji}\n Y: {yPoNormalizacji}, a nie znormalizowana: X: {RightController.transform.position.x}\n Z: {RightController.transform.position.z}\n Y: {RightController.transform.position.y}");
 
-                    right.PosX = RightController.transform.position.normalized.x;
+                right.R_PosX = xPoNormalizacji;
+                right.R_PosY = yPoNormalizacji;
+                right.R_PosZ = zPoNormalizacji;
 
-                }
-                if (Configuration.RecordRightPositionY)
-                {
+                //Rotation
+                right.R_RotX = RightController.transform.rotation.normalized.x;
 
+                right.R_RotY = RightController.transform.rotation.normalized.y;
 
-                    right.PosY = RightController.transform.position.normalized.y;
+                right.R_RotZ = RightController.transform.rotation.normalized.z;
 
-                }
-                if (Configuration.RecordRightPositionZ)
-                {
-
-
-                    right.PosZ = RightController.transform.position.normalized.z;
-
-                }
-                if (Configuration.RecordRightRotationX)
-                {
-                    right.RotX = RightController.transform.rotation.normalized.x;
-                }
-                if (Configuration.RecordRightRotationY)
-                {
-                    right.RotY = RightController.transform.rotation.normalized.y;
-                }
-                if (Configuration.RecordRightRotationZ)
-                {
-                    right.RotZ = RightController.transform.rotation.normalized.z;
-                }
             }
 
             if (HeadController != null)
             {
-                if (Configuration.RecordHeadPositionX)
-                {
-                    head.PosX = HeadController.transform.position.normalized.x;
-                }
-                if (Configuration.RecordHeadPositionY)
-                {
-                    head.PosY = HeadController.transform.position.normalized.y;
-                }
-                if (Configuration.RecordHeadPositionZ)
-                {
-                    head.PosZ = HeadController.transform.position.normalized.z;
-                }
-                if (Configuration.RecordHeadRotationX)
-                {
-                    head.RotX = HeadController.transform.rotation.normalized.x;
-                }
-                if (Configuration.RecordHeadRotationY)
-                {
-                    head.RotY = HeadController.transform.rotation.normalized.y;
-                }
-                if (Configuration.RecordHeadRotationZ)
-                {
-                    head.RotZ = HeadController.transform.rotation.normalized.z;
-                }
+
+                head.H_PosX = HeadController.transform.position.normalized.x;
+
+                head.H_PosY = HeadController.transform.position.normalized.y;
+
+                head.H_PosZ = HeadController.transform.position.normalized.z;
+
+                head.H_RotX = HeadController.transform.rotation.normalized.x;
+
+                head.H_RotY = HeadController.transform.rotation.normalized.y;
+
+                head.H_RotZ = HeadController.transform.rotation.normalized.z;
+
             }
 
             record.LeftController = left;
@@ -355,9 +288,10 @@ namespace Recorder
 
 
             //Write to csv
-            WriteRecordToCSV(record,ref csvstream);
+            WriteRecordToCSV(record, ref csvstream);
 
             //Write to Json
+
             //TODO: Dodać inny stream z rozszerzeniem json i opisać konfigurację json
 
             /*
@@ -425,12 +359,12 @@ namespace Recorder
             stream.WriteField("Kolejność urządzeń : Head Controller,  Left Controller, Right Controller");
             stream.NextRecord();
             stream.WriteHeader<Record>();
-            stream.NextRecord();          
+            stream.NextRecord();
         }
         internal void WriteRecordToCSV(Record record, ref CsvWriter stream)
         {
             stream.WriteRecord(record);
-                    stream.NextRecord();
+            stream.NextRecord();
         }
 
         // Import data
