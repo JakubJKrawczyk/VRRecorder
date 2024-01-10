@@ -4,30 +4,26 @@ using UnityEngine.Video;
 namespace Unity.VRTemplate
 {
     /// <summary>
-    /// Create a RenderTexture for rendering video to a target renderer.
+    ///     Create a RenderTexture for rendering video to a target renderer.
     /// </summary>
     [RequireComponent(typeof(VideoPlayer))]
     public class VideoPlayerRenderTexture : MonoBehaviour
     {
-        const string k_ShaderName = "Unlit/Texture";
+        private const string k_ShaderName = "Unlit/Texture";
 
-        [SerializeField]
-        [Tooltip("The target Renderer which will display the video.")]
-        Renderer m_Renderer;
+        [SerializeField] [Tooltip("The target Renderer which will display the video.")]
+        private Renderer m_Renderer;
 
-        [SerializeField]
-        [Tooltip("The width of the RenderTexture which will be created.")]
-        int m_RenderTextureWidth = 1920;
+        [SerializeField] [Tooltip("The width of the RenderTexture which will be created.")]
+        private int m_RenderTextureWidth = 1920;
 
-        [SerializeField]
-        [Tooltip("The height of the RenderTexture which will be created.")]
-        int m_RenderTextureHeight = 1080;
+        [SerializeField] [Tooltip("The height of the RenderTexture which will be created.")]
+        private int m_RenderTextureHeight = 1080;
 
-        [SerializeField]
-        [Tooltip("The bit depth of the depth channel for the RenderTexture which will be created.")]
-        int m_RenderTextureDepth;
+        [SerializeField] [Tooltip("The bit depth of the depth channel for the RenderTexture which will be created.")]
+        private int m_RenderTextureDepth;
 
-        void Start()
+        private void Start()
         {
             var renderTexture = new RenderTexture(m_RenderTextureWidth, m_RenderTextureHeight, m_RenderTextureDepth);
             renderTexture.Create();

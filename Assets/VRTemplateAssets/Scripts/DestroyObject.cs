@@ -3,15 +3,14 @@ using UnityEngine;
 namespace Unity.VRTemplate
 {
     /// <summary>
-    /// Destroys GameObject after a few seconds.
+    ///     Destroys GameObject after a few seconds.
     /// </summary>
     public class DestroyObject : MonoBehaviour
     {
-        [SerializeField]
-        [Tooltip("Time before destroying in seconds.")]
-        float m_Lifetime = 5f;
+        [SerializeField] [Tooltip("Time before destroying in seconds.")]
+        private float m_Lifetime = 5f;
 
-        void Start()
+        private void Start()
         {
             Destroy(gameObject, m_Lifetime);
         }

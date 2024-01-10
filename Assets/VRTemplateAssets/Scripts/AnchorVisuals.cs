@@ -1,4 +1,3 @@
-using System;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit.Utilities.Tweenables.Primitives;
@@ -6,30 +5,30 @@ using UnityEngine.XR.Interaction.Toolkit.Utilities.Tweenables.Primitives;
 namespace Unity.VRTemplate
 {
     /// <summary>
-    /// Helper script used to control the Teleport Anchor visuals animations.
+    ///     Helper script used to control the Teleport Anchor visuals animations.
     /// </summary>
     public class AnchorVisuals : MonoBehaviour
     {
-        [SerializeField, Tooltip("The animation for the vertical glow element on the platform.")]
-        Animation m_FadeAnimation;
+        [SerializeField] [Tooltip("The animation for the vertical glow element on the platform.")]
+        private Animation m_FadeAnimation;
 
-        [SerializeField, Tooltip("The arrow transform, at the center of the platform.")]
-        Transform m_Arrow;
+        [SerializeField] [Tooltip("The arrow transform, at the center of the platform.")]
+        private Transform m_Arrow;
 
-        [SerializeField, Tooltip("Height of the arrow transform when teleport ray hovers the teleport pad.")]
-        float m_TargetArrowHeight = 1.0f;
+        [SerializeField] [Tooltip("Height of the arrow transform when teleport ray hovers the teleport pad.")]
+        private float m_TargetArrowHeight = 1.0f;
 
-        [SerializeField, Tooltip("Animation duration of the arrow transform to and from the target arrow height.")]
-        float m_ArrowAnimationDuration = 0.2f;
+        [SerializeField] [Tooltip("Animation duration of the arrow transform to and from the target arrow height.")]
+        private float m_ArrowAnimationDuration = 0.2f;
 
-        [SerializeField, Tooltip("Animation curve of hte arrow transform to and from the target arrow height.")]
-        AnimationCurve m_AnimationCurve;
+        [SerializeField] [Tooltip("Animation curve of hte arrow transform to and from the target arrow height.")]
+        private AnimationCurve m_AnimationCurve;
 
-        Coroutine m_ArrowCoroutine;
-        Vector3TweenableVariable m_ArrowHeight;
-        Vector3 m_InitialArrowScale;
+        private Coroutine m_ArrowCoroutine;
+        private Vector3TweenableVariable m_ArrowHeight;
+        private Vector3 m_InitialArrowScale;
 
-        void Start()
+        private void Start()
         {
             if (m_FadeAnimation != null)
             {
@@ -43,13 +42,13 @@ namespace Unity.VRTemplate
             m_InitialArrowScale = m_Arrow.localScale;
         }
 
-        void Update()
+        private void Update()
         {
             m_Arrow.localPosition = m_ArrowHeight.Value;
         }
 
         /// <summary>
-        /// Performs animations when teleport interactor enters the teleport anchor selection.
+        ///     Performs animations when teleport interactor enters the teleport anchor selection.
         /// </summary>
         public void OnAnchorEnter()
         {
@@ -68,11 +67,12 @@ namespace Unity.VRTemplate
                 StopCoroutine(m_ArrowCoroutine);
 
             var arrowPosition = m_Arrow.localPosition;
-            m_ArrowCoroutine = StartCoroutine(m_ArrowHeight.PlaySequence(arrowPosition, new float3(arrowPosition.x, m_TargetArrowHeight, arrowPosition.z), m_ArrowAnimationDuration));
+            m_ArrowCoroutine = StartCoroutine(m_ArrowHeight.PlaySequence(arrowPosition,
+                new float3(arrowPosition.x, m_TargetArrowHeight, arrowPosition.z), m_ArrowAnimationDuration));
         }
 
         /// <summary>
-        /// Performs animations when teleport interactor exits the teleport anchor selection.
+        ///     Performs animations when teleport interactor exits the teleport anchor selection.
         /// </summary>
         public void OnAnchorExit()
         {
@@ -90,11 +90,12 @@ namespace Unity.VRTemplate
                 StopCoroutine(m_ArrowCoroutine);
 
             var arrowPosition = m_Arrow.localPosition;
-            m_ArrowCoroutine = StartCoroutine(m_ArrowHeight.PlaySequence(arrowPosition, new float3(arrowPosition.x, 0, arrowPosition.z), m_ArrowAnimationDuration));
+            m_ArrowCoroutine = StartCoroutine(m_ArrowHeight.PlaySequence(arrowPosition,
+                new float3(arrowPosition.x, 0, arrowPosition.z), m_ArrowAnimationDuration));
         }
 
         /// <summary>
-        /// Hides the arrow visual when teleporting
+        ///     Hides the arrow visual when teleporting
         /// </summary>
         public void HideArrowOnTeleport()
         {

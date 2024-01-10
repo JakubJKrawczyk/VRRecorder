@@ -6,137 +6,53 @@ using UnityEngine.XR.Interaction.Toolkit;
 namespace Unity.VRTemplate
 {
     /// <summary>
-    /// An interactable knob that follows the rotation of the interactor
+    ///     An interactable knob that follows the rotation of the interactor
     /// </summary>
     public class XRKnob : XRBaseInteractable
     {
-        const float k_ModeSwitchDeadZone = 0.1f; // Prevents rapid switching between the different rotation tracking modes
+        private const float
+            k_ModeSwitchDeadZone = 0.1f; // Prevents rapid switching between the different rotation tracking modes
+
+        [SerializeField] [Tooltip("The object that is visually grabbed and manipulated")]
+        private Transform m_Handle;
+
+        [SerializeField] [Tooltip("The value of the knob")] [Range(0.0f, 1.0f)]
+        private float m_Value = 0.5f;
+
+        [SerializeField] [Tooltip("Whether this knob's rotation should be clamped by the angle limits")]
+        private bool m_ClampedMotion = true;
+
+        [SerializeField] [Tooltip("Rotation of the knob at value '1'")]
+        private float m_MaxAngle = 90.0f;
+
+        [SerializeField] [Tooltip("Rotation of the knob at value '0'")]
+        private float m_MinAngle = -90.0f;
+
+        [SerializeField] [Tooltip("Angle increments to support, if greater than '0'")]
+        private float m_AngleIncrement;
+
+        [SerializeField] [Tooltip("The position of the interactor controls rotation when outside this radius")]
+        private float m_PositionTrackedRadius = 0.1f;
+
+        [SerializeField] [Tooltip("How much controller rotation")]
+        private float m_TwistSensitivity = 1.5f;
+
+        [SerializeField] [Tooltip("Events to trigger when the knob is rotated")]
+        private ValueChangeEvent m_OnValueChange = new();
+
+        private float m_BaseKnobRotation;
+        private TrackedRotation m_ForwardVectorAngles;
+
+        private IXRSelectInteractor m_Interactor;
+
+        private TrackedRotation m_PositionAngles;
+
+        private bool m_PositionDriven;
+        private TrackedRotation m_UpVectorAngles;
+        private bool m_UpVectorDriven;
 
         /// <summary>
-        /// Helper class used to track rotations that can go beyond 180 degrees while minimizing accumulation error
-        /// </summary>
-        struct TrackedRotation
-        {
-            /// <summary>
-            /// The anchor rotation we calculate an offset from
-            /// </summary>
-            float m_BaseAngle;
-
-            /// <summary>
-            /// The target rotate we calculate the offset to
-            /// </summary>
-            float m_CurrentOffset;
-
-            /// <summary>
-            /// Any previous offsets we've added in
-            /// </summary>
-            float m_AccumulatedAngle;
-
-            /// <summary>
-            /// The total rotation that occurred from when this rotation started being tracked
-            /// </summary>
-            public float totalOffset => m_AccumulatedAngle + m_CurrentOffset;
-
-            /// <summary>
-            /// Resets the tracked rotation so that total offset returns 0
-            /// </summary>
-            public void Reset()
-            {
-                m_BaseAngle = 0.0f;
-                m_CurrentOffset = 0.0f;
-                m_AccumulatedAngle = 0.0f;
-            }
-
-            /// <summary>
-            /// Sets a new anchor rotation while maintaining any previously accumulated offset
-            /// </summary>
-            /// <param name="direction">The XZ vector used to calculate a rotation angle</param>
-            public void SetBaseFromVector(Vector3 direction)
-            {
-                // Update any accumulated angle
-                m_AccumulatedAngle += m_CurrentOffset;
-
-                // Now set a new base angle
-                m_BaseAngle = Mathf.Atan2(direction.z, direction.x) * Mathf.Rad2Deg;
-                m_CurrentOffset = 0.0f;
-            }
-
-            /// <summary>
-            /// Updates current offset and base angle based on target direction.
-            /// </summary>
-            /// <param name="direction">The XZ vector used to calculate a rotation angle</param>
-            public void SetTargetFromVector(Vector3 direction)
-            {
-                // Set the target angle
-                var targetAngle = Mathf.Atan2(direction.z, direction.x) * Mathf.Rad2Deg;
-
-                // Return the offset
-                m_CurrentOffset = ShortestAngleDistance(m_BaseAngle, targetAngle, 360.0f);
-
-                // If the offset is greater than 90 degrees, we update the base so we can rotate beyond 180 degrees
-                if (Mathf.Abs(m_CurrentOffset) > 90.0f)
-                {
-                    m_BaseAngle = targetAngle;
-                    m_AccumulatedAngle += m_CurrentOffset;
-                    m_CurrentOffset = 0.0f;
-                }
-            }
-        }
-
-        [Serializable]
-        [Tooltip("Event called when the value of the knob is changed")]
-        public class ValueChangeEvent : UnityEvent<float> { }
-
-        [SerializeField]
-        [Tooltip("The object that is visually grabbed and manipulated")]
-        Transform m_Handle = null;
-
-        [SerializeField]
-        [Tooltip("The value of the knob")]
-        [Range(0.0f, 1.0f)]
-        float m_Value = 0.5f;
-
-        [SerializeField]
-        [Tooltip("Whether this knob's rotation should be clamped by the angle limits")]
-        bool m_ClampedMotion = true;
-
-        [SerializeField]
-        [Tooltip("Rotation of the knob at value '1'")]
-        float m_MaxAngle = 90.0f;
-
-        [SerializeField]
-        [Tooltip("Rotation of the knob at value '0'")]
-        float m_MinAngle = -90.0f;
-
-        [SerializeField]
-        [Tooltip("Angle increments to support, if greater than '0'")]
-        float m_AngleIncrement = 0.0f;
-
-        [SerializeField]
-        [Tooltip("The position of the interactor controls rotation when outside this radius")]
-        float m_PositionTrackedRadius = 0.1f;
-
-        [SerializeField]
-        [Tooltip("How much controller rotation")]
-        float m_TwistSensitivity = 1.5f;
-
-        [SerializeField]
-        [Tooltip("Events to trigger when the knob is rotated")]
-        ValueChangeEvent m_OnValueChange = new ValueChangeEvent();
-
-        IXRSelectInteractor m_Interactor;
-
-        bool m_PositionDriven = false;
-        bool m_UpVectorDriven = false;
-
-        TrackedRotation m_PositionAngles = new TrackedRotation();
-        TrackedRotation m_UpVectorAngles = new TrackedRotation();
-        TrackedRotation m_ForwardVectorAngles = new TrackedRotation();
-
-        float m_BaseKnobRotation = 0.0f;
-
-        /// <summary>
-        /// The object that is visually grabbed and manipulated
+        ///     The object that is visually grabbed and manipulated
         /// </summary>
         public Transform handle
         {
@@ -145,7 +61,7 @@ namespace Unity.VRTemplate
         }
 
         /// <summary>
-        /// The value of the knob
+        ///     The value of the knob
         /// </summary>
         public float value
         {
@@ -158,7 +74,7 @@ namespace Unity.VRTemplate
         }
 
         /// <summary>
-        /// Whether this knob's rotation should be clamped by the angle limits
+        ///     Whether this knob's rotation should be clamped by the angle limits
         /// </summary>
         public bool clampedMotion
         {
@@ -167,7 +83,7 @@ namespace Unity.VRTemplate
         }
 
         /// <summary>
-        /// Rotation of the knob at value '1'
+        ///     Rotation of the knob at value '1'
         /// </summary>
         public float maxAngle
         {
@@ -176,7 +92,7 @@ namespace Unity.VRTemplate
         }
 
         /// <summary>
-        /// Rotation of the knob at value '0'
+        ///     Rotation of the knob at value '0'
         /// </summary>
         public float minAngle
         {
@@ -185,7 +101,7 @@ namespace Unity.VRTemplate
         }
 
         /// <summary>
-        /// The position of the interactor controls rotation when outside this radius
+        ///     The position of the interactor controls rotation when outside this radius
         /// </summary>
         public float positionTrackedRadius
         {
@@ -194,11 +110,11 @@ namespace Unity.VRTemplate
         }
 
         /// <summary>
-        /// Events to trigger when the knob is rotated
+        ///     Events to trigger when the knob is rotated
         /// </summary>
         public ValueChangeEvent onValueChange => m_OnValueChange;
 
-        void Start()
+        private void Start()
         {
             SetValue(m_Value);
             SetKnobRotation(ValueToRotation());
@@ -218,7 +134,54 @@ namespace Unity.VRTemplate
             base.OnDisable();
         }
 
-        void StartGrab(SelectEnterEventArgs args)
+        private void OnDrawGizmosSelected()
+        {
+            const int k_CircleSegments = 16;
+            const float k_SegmentRatio = 1.0f / k_CircleSegments;
+
+            // Nothing to do if position radius is too small
+            if (m_PositionTrackedRadius <= Mathf.Epsilon)
+                return;
+
+            var knobTransform = transform;
+
+            // Draw a circle from the handle point at size of position tracked radius
+            var circleCenter = knobTransform.position;
+
+            if (m_Handle != null)
+                circleCenter = m_Handle.position;
+
+            var circleX = knobTransform.right;
+            var circleY = knobTransform.forward;
+
+            Gizmos.color = Color.green;
+            var segmentCounter = 0;
+            while (segmentCounter < k_CircleSegments)
+            {
+                var startAngle = segmentCounter * k_SegmentRatio * 2.0f * Mathf.PI;
+                segmentCounter++;
+                var endAngle = segmentCounter * k_SegmentRatio * 2.0f * Mathf.PI;
+
+                Gizmos.DrawLine(
+                    circleCenter + (Mathf.Cos(startAngle) * circleX + Mathf.Sin(startAngle) * circleY) *
+                    m_PositionTrackedRadius,
+                    circleCenter + (Mathf.Cos(endAngle) * circleX + Mathf.Sin(endAngle) * circleY) *
+                    m_PositionTrackedRadius);
+            }
+        }
+
+        private void OnValidate()
+        {
+            if (m_ClampedMotion)
+                m_Value = Mathf.Clamp01(m_Value);
+
+            if (m_MinAngle > m_MaxAngle)
+                m_MinAngle = m_MaxAngle;
+
+            SetKnobRotation(ValueToRotation());
+        }
+
+        private void StartGrab(SelectEnterEventArgs args)
         {
             m_Interactor = args.interactorObject;
 
@@ -230,7 +193,7 @@ namespace Unity.VRTemplate
             UpdateRotation(true);
         }
 
-        void EndGrab(SelectExitEventArgs args)
+        private void EndGrab(SelectExitEventArgs args)
         {
             m_Interactor = null;
         }
@@ -241,12 +204,8 @@ namespace Unity.VRTemplate
             base.ProcessInteractable(updatePhase);
 
             if (updatePhase == XRInteractionUpdateOrder.UpdatePhase.Dynamic)
-            {
                 if (isSelected)
-                {
                     UpdateRotation();
-                }
-            }
         }
 
         /// <inheritdoc />
@@ -255,7 +214,7 @@ namespace Unity.VRTemplate
             return m_Handle;
         }
 
-        void UpdateRotation(bool freshCheck = false)
+        private void UpdateRotation(bool freshCheck = false)
         {
             // Are we in position offset or direction rotation mode?
             var interactorTransform = m_Interactor.GetAttachTransform(this);
@@ -277,7 +236,7 @@ namespace Unity.VRTemplate
             localUp.Normalize();
 
             if (m_PositionDriven && !freshCheck)
-                radiusOffset *= (1.0f + k_ModeSwitchDeadZone);
+                radiusOffset *= 1.0f + k_ModeSwitchDeadZone;
 
             // Determine when a certain source of rotation won't contribute - in that case we bake in the offset it has applied
             // and set a new anchor when they can contribute again
@@ -290,15 +249,17 @@ namespace Unity.VRTemplate
                 }
             }
             else
+            {
                 m_PositionDriven = false;
+            }
 
             // If it's not a fresh check, then we weight the local Y up or down to keep it from flickering back and forth at boundaries
             if (!freshCheck)
             {
                 if (!m_UpVectorDriven)
-                    localY *= (1.0f - (k_ModeSwitchDeadZone * 0.5f));
+                    localY *= 1.0f - k_ModeSwitchDeadZone * 0.5f;
                 else
-                    localY *= (1.0f + (k_ModeSwitchDeadZone * 0.5f));
+                    localY *= 1.0f + k_ModeSwitchDeadZone * 0.5f;
             }
 
             if (localY > 0.707f)
@@ -328,7 +289,9 @@ namespace Unity.VRTemplate
                 m_ForwardVectorAngles.SetTargetFromVector(localForward);
 
             // Apply offset to base knob rotation to get new knob rotation
-            var knobRotation = m_BaseKnobRotation - ((m_UpVectorAngles.totalOffset + m_ForwardVectorAngles.totalOffset) * m_TwistSensitivity) - m_PositionAngles.totalOffset;
+            var knobRotation = m_BaseKnobRotation -
+                               (m_UpVectorAngles.totalOffset + m_ForwardVectorAngles.totalOffset) * m_TwistSensitivity -
+                               m_PositionAngles.totalOffset;
 
             // Clamp to range
             if (m_ClampedMotion)
@@ -341,19 +304,19 @@ namespace Unity.VRTemplate
             SetValue(knobValue);
         }
 
-        void SetKnobRotation(float angle)
+        private void SetKnobRotation(float angle)
         {
             if (m_AngleIncrement > 0)
             {
                 var normalizeAngle = angle - m_MinAngle;
-                angle = (Mathf.Round(normalizeAngle / m_AngleIncrement) * m_AngleIncrement) + m_MinAngle;
+                angle = Mathf.Round(normalizeAngle / m_AngleIncrement) * m_AngleIncrement + m_MinAngle;
             }
 
             if (m_Handle != null)
                 m_Handle.localEulerAngles = new Vector3(0.0f, angle, 0.0f);
         }
 
-        void SetValue(float newValue)
+        private void SetValue(float newValue)
         {
             if (m_ClampedMotion)
                 newValue = Mathf.Clamp01(newValue);
@@ -370,70 +333,105 @@ namespace Unity.VRTemplate
             m_OnValueChange.Invoke(m_Value);
         }
 
-        float ValueToRotation()
+        private float ValueToRotation()
         {
-            return m_ClampedMotion ? Mathf.Lerp(m_MinAngle, m_MaxAngle, m_Value) : Mathf.LerpUnclamped(m_MinAngle, m_MaxAngle, m_Value);
+            return m_ClampedMotion
+                ? Mathf.Lerp(m_MinAngle, m_MaxAngle, m_Value)
+                : Mathf.LerpUnclamped(m_MinAngle, m_MaxAngle, m_Value);
         }
 
-        void UpdateBaseKnobRotation()
+        private void UpdateBaseKnobRotation()
         {
             m_BaseKnobRotation = Mathf.LerpUnclamped(m_MinAngle, m_MaxAngle, m_Value);
         }
 
-        static float ShortestAngleDistance(float start, float end, float max)
+        private static float ShortestAngleDistance(float start, float end, float max)
         {
             var angleDelta = end - start;
             var angleSign = Mathf.Sign(angleDelta);
 
             angleDelta = Math.Abs(angleDelta) % max;
-            if (angleDelta > (max * 0.5f))
+            if (angleDelta > max * 0.5f)
                 angleDelta = -(max - angleDelta);
 
             return angleDelta * angleSign;
         }
 
-        void OnDrawGizmosSelected()
+        /// <summary>
+        ///     Helper class used to track rotations that can go beyond 180 degrees while minimizing accumulation error
+        /// </summary>
+        private struct TrackedRotation
         {
-            const int k_CircleSegments = 16;
-            const float k_SegmentRatio = 1.0f / k_CircleSegments;
+            /// <summary>
+            ///     The anchor rotation we calculate an offset from
+            /// </summary>
+            private float m_BaseAngle;
 
-            // Nothing to do if position radius is too small
-            if (m_PositionTrackedRadius <= Mathf.Epsilon)
-                return;
+            /// <summary>
+            ///     The target rotate we calculate the offset to
+            /// </summary>
+            private float m_CurrentOffset;
 
-            var knobTransform = transform;
+            /// <summary>
+            ///     Any previous offsets we've added in
+            /// </summary>
+            private float m_AccumulatedAngle;
 
-            // Draw a circle from the handle point at size of position tracked radius
-            var circleCenter = knobTransform.position;
+            /// <summary>
+            ///     The total rotation that occurred from when this rotation started being tracked
+            /// </summary>
+            public float totalOffset => m_AccumulatedAngle + m_CurrentOffset;
 
-            if (m_Handle != null)
-                circleCenter = m_Handle.position;
-
-            var circleX = knobTransform.right;
-            var circleY = knobTransform.forward;
-
-            Gizmos.color = Color.green;
-            var segmentCounter = 0;
-            while (segmentCounter < k_CircleSegments)
+            /// <summary>
+            ///     Resets the tracked rotation so that total offset returns 0
+            /// </summary>
+            public void Reset()
             {
-                var startAngle = segmentCounter * k_SegmentRatio * 2.0f * Mathf.PI;
-                segmentCounter++;
-                var endAngle = segmentCounter * k_SegmentRatio * 2.0f * Mathf.PI;
+                m_BaseAngle = 0.0f;
+                m_CurrentOffset = 0.0f;
+                m_AccumulatedAngle = 0.0f;
+            }
 
-                Gizmos.DrawLine(circleCenter + (Mathf.Cos(startAngle) * circleX + Mathf.Sin(startAngle) * circleY) * m_PositionTrackedRadius,
-                    circleCenter + (Mathf.Cos(endAngle) * circleX + Mathf.Sin(endAngle) * circleY) * m_PositionTrackedRadius);
+            /// <summary>
+            ///     Sets a new anchor rotation while maintaining any previously accumulated offset
+            /// </summary>
+            /// <param name="direction">The XZ vector used to calculate a rotation angle</param>
+            public void SetBaseFromVector(Vector3 direction)
+            {
+                // Update any accumulated angle
+                m_AccumulatedAngle += m_CurrentOffset;
+
+                // Now set a new base angle
+                m_BaseAngle = Mathf.Atan2(direction.z, direction.x) * Mathf.Rad2Deg;
+                m_CurrentOffset = 0.0f;
+            }
+
+            /// <summary>
+            ///     Updates current offset and base angle based on target direction.
+            /// </summary>
+            /// <param name="direction">The XZ vector used to calculate a rotation angle</param>
+            public void SetTargetFromVector(Vector3 direction)
+            {
+                // Set the target angle
+                var targetAngle = Mathf.Atan2(direction.z, direction.x) * Mathf.Rad2Deg;
+
+                // Return the offset
+                m_CurrentOffset = ShortestAngleDistance(m_BaseAngle, targetAngle, 360.0f);
+
+                // If the offset is greater than 90 degrees, we update the base so we can rotate beyond 180 degrees
+                if (Mathf.Abs(m_CurrentOffset) > 90.0f)
+                {
+                    m_BaseAngle = targetAngle;
+                    m_AccumulatedAngle += m_CurrentOffset;
+                    m_CurrentOffset = 0.0f;
+                }
             }
         }
 
-        void OnValidate()
+        [Serializable]
+        [Tooltip("Event called when the value of the knob is changed")]
+        public class ValueChangeEvent : UnityEvent<float>
         {
-            if (m_ClampedMotion)
-                m_Value = Mathf.Clamp01(m_Value);
-
-            if (m_MinAngle > m_MaxAngle)
-                m_MinAngle = m_MaxAngle;
-
-            SetKnobRotation(ValueToRotation());
         }
     }
 }

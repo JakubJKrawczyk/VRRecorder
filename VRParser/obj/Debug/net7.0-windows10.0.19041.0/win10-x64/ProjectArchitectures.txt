@@ -1,0 +1,1 @@
+C:\Users\zresp\Desktop\ActualProjects\VRRecorder\VRParser\VRParser.csproj;x64

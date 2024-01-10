@@ -1,22 +1,16 @@
 ﻿using Assets.Recorder.DataModels;
 using CsvHelper;
 using CsvHelper.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Assets.Recorder.Mappers
 {
     internal class OculusRecordMapper
     {
-
         internal static ClassMap CreateMap()
         {
-            Factory _factory = new Factory();
+            var _factory = new Factory();
 
-            IHasMap<Record> _mapper = _factory.CreateClassMapBuilder<Record>();
+            var _mapper = _factory.CreateClassMapBuilder<Record>();
             //Head Controller
             _mapper.Map(x => x.Head.H_PosX);
             _mapper.Map(x => x.Head.H_PosY);

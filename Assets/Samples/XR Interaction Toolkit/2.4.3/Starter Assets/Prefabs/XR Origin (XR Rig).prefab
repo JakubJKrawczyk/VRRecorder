@@ -60,7 +60,7 @@ MonoBehaviour:
   m_SnapTurn: {fileID: -7374733323251553461, guid: c348712bda248c246b8c49b3db54643f, type: 3}
   m_Move: {fileID: 6972639530819350904, guid: c348712bda248c246b8c49b3db54643f, type: 3}
   m_UIScroll: {fileID: 2464016903823916871, guid: c348712bda248c246b8c49b3db54643f, type: 3}
-  m_SmoothMotionEnabled: 1
+  m_SmoothMotionEnabled: 0
   m_SmoothTurnEnabled: 0
   m_UIScrollingEnabled: 1
 --- !u!114 &202364692
@@ -654,10 +654,10 @@ Transform:
   - {fileID: 1767192434}
   - {fileID: 2196849375614954873}
   - {fileID: 3595914740002285240}
-  - {fileID: 716906830792148215}
-  - {fileID: 8718302446126152263}
   - {fileID: 202364688}
   - {fileID: 1670256625}
+  - {fileID: 716906830792148215}
+  - {fileID: 8718302446126152263}
   m_Father: {fileID: 1717954561962503726}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1767192433

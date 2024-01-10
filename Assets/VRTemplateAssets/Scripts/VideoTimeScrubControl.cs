@@ -8,46 +8,40 @@ using UnityEngine.Video;
 namespace Unity.VRTemplate
 {
     /// <summary>
-    /// Connects a UI slider control to a video player, allowing users to scrub to a particular time in th video.
+    ///     Connects a UI slider control to a video player, allowing users to scrub to a particular time in th video.
     /// </summary>
     [RequireComponent(typeof(VideoPlayer))]
     public class VideoTimeScrubControl : MonoBehaviour
     {
-        [SerializeField]
-        [Tooltip("Video play/pause button GameObject")]
-        GameObject m_ButtonPlayOrPause;
+        [SerializeField] [Tooltip("Video play/pause button GameObject")]
+        private GameObject m_ButtonPlayOrPause;
 
-        [SerializeField]
-        [Tooltip("Slider that controls the video")]
-        Slider m_Slider;
+        [SerializeField] [Tooltip("Slider that controls the video")]
+        private Slider m_Slider;
 
-        [SerializeField]
-        [Tooltip("Play icon sprite")]
-        Sprite m_IconPlay;
+        [SerializeField] [Tooltip("Play icon sprite")]
+        private Sprite m_IconPlay;
 
-        [SerializeField]
-        [Tooltip("Pause icon sprite")]
-        Sprite m_IconPause;
+        [SerializeField] [Tooltip("Pause icon sprite")]
+        private Sprite m_IconPause;
 
-        [SerializeField]
-        [Tooltip("Play or pause button image.")]
-        Image m_ButtonPlayOrPauseIcon;
+        [SerializeField] [Tooltip("Play or pause button image.")]
+        private Image m_ButtonPlayOrPauseIcon;
 
-        [SerializeField]
-        [Tooltip("Text that displays the current time of the video.")]
-        TextMeshProUGUI m_VideoTimeText;
+        [SerializeField] [Tooltip("Text that displays the current time of the video.")]
+        private TextMeshProUGUI m_VideoTimeText;
 
         [SerializeField]
         [Tooltip("If checked, the slider will fade off after a few seconds. If unchecked, the slider will remain on.")]
-        bool m_HideSliderAfterFewSeconds;
+        private bool m_HideSliderAfterFewSeconds;
 
-        bool m_IsDragging;
-        bool m_VideoIsPlaying;
-        bool m_VideoJumpPending;
-        long m_LastFrameBeforeScrub;
-        VideoPlayer m_VideoPlayer;
+        private bool m_IsDragging;
+        private long m_LastFrameBeforeScrub;
+        private bool m_VideoIsPlaying;
+        private bool m_VideoJumpPending;
+        private VideoPlayer m_VideoPlayer;
 
-        void Start()
+        private void Start()
         {
             m_VideoPlayer = GetComponent<VideoPlayer>();
             if (!m_VideoPlayer.playOnAwake)
@@ -65,22 +59,7 @@ namespace Unity.VRTemplate
                 m_ButtonPlayOrPause.SetActive(false);
         }
 
-        void OnEnable()
-        {
-            if (m_VideoPlayer != null)
-            {
-                m_VideoPlayer.frame = 0;
-                VideoPlay(); // Ensures correct UI state update if paused.
-            }
-
-            m_Slider.value = 0.0f;
-            m_Slider.onValueChanged.AddListener(OnSliderValueChange);
-            m_Slider.gameObject.SetActive(true);
-            if (m_HideSliderAfterFewSeconds)
-                StartCoroutine(HideSliderAfterSeconds());
-        }
-
-        void Update()
+        private void Update()
         {
             if (m_VideoJumpPending)
             {
@@ -94,13 +73,26 @@ namespace Unity.VRTemplate
             }
 
             if (!m_IsDragging && !m_VideoJumpPending)
-            {
                 if (m_VideoPlayer.frameCount > 0)
                 {
                     var progress = (float)m_VideoPlayer.frame / m_VideoPlayer.frameCount;
                     m_Slider.value = progress;
                 }
+        }
+
+        private void OnEnable()
+        {
+            if (m_VideoPlayer != null)
+            {
+                m_VideoPlayer.frame = 0;
+                VideoPlay(); // Ensures correct UI state update if paused.
             }
+
+            m_Slider.value = 0.0f;
+            m_Slider.onValueChanged.AddListener(OnSliderValueChange);
+            m_Slider.gameObject.SetActive(true);
+            if (m_HideSliderAfterFewSeconds)
+                StartCoroutine(HideSliderAfterSeconds());
         }
 
         public void OnPointerDown()
@@ -117,12 +109,12 @@ namespace Unity.VRTemplate
             VideoJump();
         }
 
-        void OnSliderValueChange(float sliderValue)
+        private void OnSliderValueChange(float sliderValue)
         {
             UpdateVideoTimeText();
         }
 
-        IEnumerator HideSliderAfterSeconds(float duration = 1f)
+        private IEnumerator HideSliderAfterSeconds(float duration = 1f)
         {
             yield return new WaitForSeconds(duration);
             m_Slider.gameObject.SetActive(false);
@@ -134,7 +126,7 @@ namespace Unity.VRTemplate
             m_VideoJumpPending = true;
         }
 
-        void VideoJump()
+        private void VideoJump()
         {
             m_VideoJumpPending = true;
             var frame = m_VideoPlayer.frameCount * m_Slider.value;
@@ -145,16 +137,12 @@ namespace Unity.VRTemplate
         public void PlayOrPauseVideo()
         {
             if (m_VideoIsPlaying)
-            {
                 VideoStop();
-            }
             else
-            {
                 VideoPlay();
-            }
         }
 
-        void UpdateVideoTimeText()
+        private void UpdateVideoTimeText()
         {
             if (m_VideoPlayer != null && m_VideoTimeText != null)
             {
@@ -173,7 +161,7 @@ namespace Unity.VRTemplate
             }
         }
 
-        void VideoStop()
+        private void VideoStop()
         {
             m_VideoIsPlaying = false;
             m_VideoPlayer.Pause();
@@ -181,7 +169,7 @@ namespace Unity.VRTemplate
             m_ButtonPlayOrPause.SetActive(true);
         }
 
-        void VideoPlay()
+        private void VideoPlay()
         {
             m_VideoIsPlaying = true;
             m_VideoPlayer.Play();

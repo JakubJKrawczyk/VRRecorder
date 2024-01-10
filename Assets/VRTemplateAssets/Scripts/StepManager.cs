@@ -6,27 +6,15 @@ using UnityEngine;
 namespace Unity.VRTemplate
 {
     /// <summary>
-    /// Controls the steps in the in coaching card.
+    ///     Controls the steps in the in coaching card.
     /// </summary>
     public class StepManager : MonoBehaviour
     {
-        [Serializable]
-        class Step
-        {
-            [SerializeField]
-            public GameObject stepObject;
+        [SerializeField] public TextMeshProUGUI m_StepButtonTextField;
 
-            [SerializeField]
-            public string buttonText;
-        }
+        [SerializeField] private List<Step> m_StepList = new();
 
-        [SerializeField]
-        public TextMeshProUGUI m_StepButtonTextField;
-
-        [SerializeField]
-        List<Step> m_StepList = new List<Step>();
-
-        int m_CurrentStepIndex = 0;
+        private int m_CurrentStepIndex;
 
         public void Next()
         {
@@ -34,6 +22,14 @@ namespace Unity.VRTemplate
             m_CurrentStepIndex = (m_CurrentStepIndex + 1) % m_StepList.Count;
             m_StepList[m_CurrentStepIndex].stepObject.SetActive(true);
             m_StepButtonTextField.text = m_StepList[m_CurrentStepIndex].buttonText;
+        }
+
+        [Serializable]
+        private class Step
+        {
+            [SerializeField] public GameObject stepObject;
+
+            [SerializeField] public string buttonText;
         }
     }
 }

@@ -1,0 +1,119 @@
+﻿@page "/"
+@{
+    //TODO: upiększyć tą stronę
+}
+<div class="align-content-center welcomePage" >
+    
+    
+    <h1> Welcome! </h1>
+    <h2> What you want to do? </h2>
+    <div class="recentFilesDiv" style="width:30vw;"> 
+        <table class="recentFilesTable">
+            @if (_recentFiles is null)
+            {
+                <p>
+                    <em>Loading...</em>
+                </p>
+            }
+            else
+            {
+                <tr >
+
+                    <th class="border-1 p-2">
+                        File Name
+                    </th>
+                    <th class="border-1 p-2">
+                        Creation Date
+                    </th>
+
+                </tr>
+
+                foreach (var file in _recentFiles)
+                {
+                    if (file != "Empty")
+                    {
+                        <tr>
+                            <th class="border-1 p-2">file</th>
+                        </tr>
+                        <tr>
+                            <th class="border-1 p-2">
+                            
+                                @{
+                                    File.GetCreationTime(file);
+                                }
+                            </th>
+                        </tr>
+                    }
+                    else
+                    {
+                        <tr>
+                            <th class="border-1 p-2">@file</th>
+                        </tr>
+                        <tr>
+                            <th class="border-1 p-2">
+                            
+                                @file
+                            </th>
+                        </tr>
+                    };
+                    
+
+                }
+            }
+        </table>
+    </div>
+
+    <div>
+        <button onclick="toCreateNewPage()">Create new</button>
+        <button onclick="ToImportFilePage()">Import</button>
+        <button onclick="ToOpenFilePage()">Open</button>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    function ToOpenFilePage() {
+        window.location.href = "/open";
+    }
+
+    function toCreateNewPage(){
+        window.location.href = "/createnew";
+    }
+
+    function ToImportFilePage(){
+        window.location.href = "/import";
+    }
+        
+        
+        
+</script>
+@code{
+
+    private List<string> _recentFiles;
+    protected override async Task OnInitializedAsync()
+    {
+       await Task.Run( () =>
+       {
+           string recentFilesDirPath = Path.Join(Environment.SpecialFolder.ApplicationData.ToString(), "/Projects");
+           if (Directory.Exists(recentFilesDirPath))
+           {
+                _recentFiles = Directory.GetFiles(recentFilesDirPath).ToList();
+               
+               
+           }
+           else
+           {
+               Directory.CreateDirectory(recentFilesDirPath);
+               _recentFiles = new();
+               _recentFiles.Add("Empty");
+               _recentFiles.Add("Empty");
+               _recentFiles.Add("Empty");
+               _recentFiles.Add("Empty");
+           }
+
+        });
+    }
+
+   
+
+}

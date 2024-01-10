@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Recorder.Entities.OculusVR;
 
 namespace Assets.Recorder.DataModels
@@ -10,19 +6,17 @@ namespace Assets.Recorder.DataModels
     [Serializable]
     internal class Record
     {
-        internal HeadVREntity Head { get; set; }
-        internal LeftControllerVREntity LeftController { get; set; }
-        internal RightControllerVREntity RightController { get; set; }
-        internal TimeSpan TimeSpan { get; set; }
-
         internal Record()
         {
-            Head = new();
+            Head = new HeadVREntity();
             LeftController = new LeftControllerVREntity();
             RightController = new RightControllerVREntity();
             TimeSpan = new TimeSpan();
         }
 
-        
+        internal HeadVREntity Head { get; set; }
+        internal LeftControllerVREntity LeftController { get; set; }
+        internal RightControllerVREntity RightController { get; set; }
+        internal TimeSpan TimeSpan { get; set; }
     }
 }

@@ -5,14 +5,6 @@ namespace Recorder.Entities.OculusVR
     [Serializable]
     internal struct HeadVREntity
     {
-
-        public double H_PosX { get; set; }
-        public double H_PosY { get; set; }
-        public double H_PosZ { get; set; }
-        public double H_RotX { get; set; }
-        public double H_RotY { get; set; }
-        public double H_RotZ { get; set; }
-                       
         public HeadVREntity(
             double positionX = 0,
             double positionY = 0,
@@ -30,6 +22,11 @@ namespace Recorder.Entities.OculusVR
             H_RotZ = rotationZ;
         }
 
-        
+        public double H_PosX { get; set; }
+        public double H_PosY { get; set; }
+        public double H_PosZ { get; set; }
+        public double H_RotX { get; set; }
+        public double H_RotY { get; set; }
+        public double H_RotZ { get; set; }
     }
 }

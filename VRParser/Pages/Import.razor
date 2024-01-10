@@ -1,0 +1,29 @@
+﻿@page "/import"
+@using VRParser.GlobalClasses
+@using VRParser.services
+@inject IJSRuntime Js
+<h3>import</h3>
+
+<div class="FileDialogBox">
+    
+    
+    <InputFile OnChange="GetFile"/>
+    
+    
+    
+</div>
+ 
+
+@code {
+
+  
+    private async Task GetFile(InputFileChangeEventArgs obj)
+    {
+        var file = obj.File;
+
+        GlobalVariables.ImportedFile = file;
+
+        await FilesService.ConvertFileToObject();
+    }
+
+}

@@ -8,8 +8,8 @@ using UnityEngine.XR.Interaction.Toolkit.Utilities.Tweenables.Primitives;
 namespace Unity.VRTemplate
 {
     /// <summary>
-    /// Follow animation affordance for <see cref="IPokeStateDataProvider"/>, such as <see cref="XRPokeFilter"/>.
-    /// Used to animate a pressed transform, such as a button to follow the poke position.
+    ///     Follow animation affordance for <see cref="IPokeStateDataProvider" />, such as <see cref="XRPokeFilter" />.
+    ///     Used to animate a pressed transform, such as a button to follow the poke position.
     /// </summary>
     [AddComponentMenu("XR/XR Poke Follow Affordance Fill", 22)]
     public class XRPokeFollowAffordanceFill : MonoBehaviour
@@ -17,23 +17,63 @@ namespace Unity.VRTemplate
         [SerializeField]
         [Tooltip("Transform that will move in the poke direction when this or a parent GameObject is poked." +
                  "\nNote: Should be a direct child GameObject.")]
-        Transform m_PokeFollowTransform;
+        private Transform m_PokeFollowTransform;
+
+        [SerializeField] [Tooltip("Transform that will scale the mask when this interactable is poked.")]
+        private RectTransform m_PokeFill;
+
+        [SerializeField] [Tooltip("The max width size for the poke fill image when pressed")]
+        private float m_PokeFillMaxSizeX;
+
+        [SerializeField] [Tooltip("The max height size for the poke fill image when pressed")]
+        private float m_PokeFillMaxSizeY;
 
         [SerializeField]
-        [Tooltip("Transform that will scale the mask when this interactable is poked.")]
-        RectTransform m_PokeFill;
+        [Range(0f, 20f)]
+        [Tooltip(
+            "Multiplies transform position interpolation as a factor of Time.deltaTime. If 0, no smoothing will be applied.")]
+        private float m_SmoothingSpeed = 8f;
 
         [SerializeField]
-        [Tooltip("The max width size for the poke fill image when pressed")]
-        float m_PokeFillMaxSizeX;
+        [Tooltip(
+            "When this component is no longer the target of the poke, the Poke Follow Transform returns to the original position.")]
+        private bool m_ReturnToInitialPosition = true;
 
         [SerializeField]
-        [Tooltip("The max height size for the poke fill image when pressed")]
-        float m_PokeFillMaxSizeY;
+        [Tooltip("Whether to apply the follow animation if the target of the poke is a child of this transform. " +
+                 "This is useful for UI objects that may have child graphics.")]
+        private bool m_ApplyIfChildIsTarget = true;
+
+        [Header("Distance Clamping")]
+        [SerializeField]
+        [Tooltip("Whether to keep the Poke Follow Transform from moving past a minimum distance from the poke target.")]
+        private bool m_ClampToMinDistance;
+
+        [SerializeField] [Tooltip("The minimum distance from this transform that the Poke Follow Transform can move.")]
+        private float m_MinDistance;
+
+        [Space]
+        [SerializeField]
+        [Tooltip("Whether to keep the Poke Follow Transform from moving past a maximum distance from the poke target.")]
+        private bool m_ClampToMaxDistance;
+
+        [SerializeField]
+        [Tooltip(
+            "The maximum distance from this transform that the Poke Follow Transform can move. Will shrink to the distance of initial position if that is smaller, or if this is 0.")]
+        private float m_MaxDistance;
+
+        private readonly BindingsGroup m_BindingsGroup = new();
+        private readonly FloatTweenableVariable m_PokeStrengthTweenableVariable = new();
+
+        private readonly Vector3TweenableVariable m_TransformTweenableVariable = new();
+        private Vector3 m_InitialPosition;
+        private bool m_IsFirstFrame;
+
+        private IPokeStateDataProvider m_PokeDataProvider;
 
         /// <summary>
-        /// Transform that will animate along the axis of interaction when this interactable is poked.
-        /// Note: Must be a direct child GameObject as it moves in local space relative to the poke target's transform.
+        ///     Transform that will animate along the axis of interaction when this interactable is poked.
+        ///     Note: Must be a direct child GameObject as it moves in local space relative to the poke target's transform.
         /// </summary>
         public Transform pokeFollowTransform
         {
@@ -41,13 +81,9 @@ namespace Unity.VRTemplate
             set => m_PokeFollowTransform = value;
         }
 
-        [SerializeField]
-        [Range(0f, 20f)]
-        [Tooltip("Multiplies transform position interpolation as a factor of Time.deltaTime. If 0, no smoothing will be applied.")]
-        float m_SmoothingSpeed = 8f;
-
         /// <summary>
-        /// Multiplies transform position interpolation as a factor of <see cref="Time.deltaTime"/>. If <c>0</c>, no smoothing will be applied.
+        ///     Multiplies transform position interpolation as a factor of <see cref="Time.deltaTime" />. If <c>0</c>, no smoothing
+        ///     will be applied.
         /// </summary>
         public float smoothingSpeed
         {
@@ -55,12 +91,9 @@ namespace Unity.VRTemplate
             set => m_SmoothingSpeed = value;
         }
 
-        [SerializeField]
-        [Tooltip("When this component is no longer the target of the poke, the Poke Follow Transform returns to the original position.")]
-        bool m_ReturnToInitialPosition = true;
-
         /// <summary>
-        /// When this component is no longer the target of the poke, the <see cref="pokeFollowTransform"/> returns to the original position.
+        ///     When this component is no longer the target of the poke, the <see cref="pokeFollowTransform" /> returns to the
+        ///     original position.
         /// </summary>
         public bool returnToInitialPosition
         {
@@ -68,14 +101,9 @@ namespace Unity.VRTemplate
             set => m_ReturnToInitialPosition = value;
         }
 
-        [SerializeField]
-        [Tooltip("Whether to apply the follow animation if the target of the poke is a child of this transform. " +
-                 "This is useful for UI objects that may have child graphics.")]
-        bool m_ApplyIfChildIsTarget = true;
-
         /// <summary>
-        /// Whether to apply the follow animation if the target of the poke is a child of this transform.
-        /// This is useful for UI objects that may have child graphics.
+        ///     Whether to apply the follow animation if the target of the poke is a child of this transform.
+        ///     This is useful for UI objects that may have child graphics.
         /// </summary>
         public bool applyIfChildIsTarget
         {
@@ -83,13 +111,9 @@ namespace Unity.VRTemplate
             set => m_ApplyIfChildIsTarget = value;
         }
 
-        [Header("Distance Clamping")]
-        [SerializeField]
-        [Tooltip("Whether to keep the Poke Follow Transform from moving past a minimum distance from the poke target.")]
-        bool m_ClampToMinDistance;
-
         /// <summary>
-        /// Whether to keep the <see cref="pokeFollowTransform"/> from moving past <see cref="minDistance"/> from the poke target.
+        ///     Whether to keep the <see cref="pokeFollowTransform" /> from moving past <see cref="minDistance" /> from the poke
+        ///     target.
         /// </summary>
         public bool clampToMinDistance
         {
@@ -97,26 +121,19 @@ namespace Unity.VRTemplate
             set => m_ClampToMinDistance = value;
         }
 
-        [SerializeField]
-        [Tooltip("The minimum distance from this transform that the Poke Follow Transform can move.")]
-        float m_MinDistance;
-
         /// <summary>
-        /// The minimum distance from this transform that the <see cref="pokeFollowTransform"/> can move when
-        /// <see cref="clampToMinDistance"/> is <see langword="true"/>.
+        ///     The minimum distance from this transform that the <see cref="pokeFollowTransform" /> can move when
+        ///     <see cref="clampToMinDistance" /> is <see langword="true" />.
         /// </summary>
         public float minDistance
         {
             get => m_MinDistance;
             set => m_MinDistance = value;
         }
-        [Space]
-        [SerializeField]
-        [Tooltip("Whether to keep the Poke Follow Transform from moving past a maximum distance from the poke target.")]
-        bool m_ClampToMaxDistance;
 
         /// <summary>
-        /// Whether to keep the <see cref="pokeFollowTransform"/> from moving past <see cref="maxDistance"/> from the poke target.
+        ///     Whether to keep the <see cref="pokeFollowTransform" /> from moving past <see cref="maxDistance" /> from the poke
+        ///     target.
         /// </summary>
         public bool clampToMaxDistance
         {
@@ -124,13 +141,9 @@ namespace Unity.VRTemplate
             set => m_ClampToMaxDistance = value;
         }
 
-        [SerializeField]
-        [Tooltip("The maximum distance from this transform that the Poke Follow Transform can move. Will shrink to the distance of initial position if that is smaller, or if this is 0.")]
-        float m_MaxDistance;
-
         /// <summary>
-        /// The maximum distance from this transform that the <see cref="pokeFollowTransform"/> can move when
-        /// <see cref="clampToMaxDistance"/> is <see langword="true"/>.
+        ///     The maximum distance from this transform that the <see cref="pokeFollowTransform" /> can move when
+        ///     <see cref="clampToMaxDistance" /> is <see langword="true" />.
         /// </summary>
         public float maxDistance
         {
@@ -138,16 +151,8 @@ namespace Unity.VRTemplate
             set => m_MaxDistance = value;
         }
 
-        IPokeStateDataProvider m_PokeDataProvider;
-
-        readonly Vector3TweenableVariable m_TransformTweenableVariable = new Vector3TweenableVariable();
-        readonly FloatTweenableVariable m_PokeStrengthTweenableVariable = new FloatTweenableVariable();
-        readonly BindingsGroup m_BindingsGroup = new BindingsGroup();
-        Vector3 m_InitialPosition;
-        bool m_IsFirstFrame;
-
         /// <summary>
-        /// See <see cref="MonoBehaviour"/>.
+        ///     See <see cref="MonoBehaviour" />.
         /// </summary>
         protected void Awake()
         {
@@ -155,14 +160,16 @@ namespace Unity.VRTemplate
         }
 
         /// <summary>
-        /// See <see cref="MonoBehaviour"/>.
+        ///     See <see cref="MonoBehaviour" />.
         /// </summary>
         protected void Start()
         {
             if (m_PokeFollowTransform != null)
             {
                 m_InitialPosition = m_PokeFollowTransform.localPosition;
-                m_MaxDistance = m_MaxDistance > 0f ? Mathf.Min(m_InitialPosition.magnitude, m_MaxDistance) : m_InitialPosition.magnitude;
+                m_MaxDistance = m_MaxDistance > 0f
+                    ? Mathf.Min(m_InitialPosition.magnitude, m_MaxDistance)
+                    : m_InitialPosition.magnitude;
                 m_BindingsGroup.AddBinding(m_TransformTweenableVariable.Subscribe(OnTransformTweenableVariableUpdated));
                 m_BindingsGroup.AddBinding(m_PokeStrengthTweenableVariable.Subscribe(OnPokeStrengthChanged));
                 m_BindingsGroup.AddBinding(m_PokeDataProvider.pokeStateData.SubscribeAndUpdate(OnPokeStateDataUpdated));
@@ -175,16 +182,7 @@ namespace Unity.VRTemplate
         }
 
         /// <summary>
-        /// See <see cref="MonoBehaviour"/>.
-        /// </summary>
-        protected void OnDestroy()
-        {
-            m_BindingsGroup.Clear();
-            m_TransformTweenableVariable?.Dispose();
-        }
-
-        /// <summary>
-        /// See <see cref="MonoBehaviour"/>.
+        ///     See <see cref="MonoBehaviour" />.
         /// </summary>
         protected void LateUpdate()
         {
@@ -197,24 +195,33 @@ namespace Unity.VRTemplate
                 return;
             }
 
-            float tweenAmt = m_SmoothingSpeed > 0f ? Time.deltaTime * m_SmoothingSpeed : 1f;
+            var tweenAmt = m_SmoothingSpeed > 0f ? Time.deltaTime * m_SmoothingSpeed : 1f;
             m_TransformTweenableVariable.HandleTween(tweenAmt);
             m_PokeStrengthTweenableVariable.HandleTween(tweenAmt);
         }
 
-        void OnTransformTweenableVariableUpdated(float3 position)
+        /// <summary>
+        ///     See <see cref="MonoBehaviour" />.
+        /// </summary>
+        protected void OnDestroy()
+        {
+            m_BindingsGroup.Clear();
+            m_TransformTweenableVariable?.Dispose();
+        }
+
+        private void OnTransformTweenableVariableUpdated(float3 position)
         {
             m_PokeFollowTransform.localPosition = position;
         }
 
-        void OnPokeStrengthChanged(float newStrength)
+        private void OnPokeStrengthChanged(float newStrength)
         {
             var newX = m_PokeFillMaxSizeX * newStrength;
             var newY = m_PokeFillMaxSizeY * newStrength;
             m_PokeFill.sizeDelta = new Vector2(newX, newY);
         }
 
-        void OnPokeStateDataUpdated(PokeStateData data)
+        private void OnPokeStateDataUpdated(PokeStateData data)
         {
             var pokeTarget = data.target;
             var applyFollow = m_ApplyIfChildIsTarget
